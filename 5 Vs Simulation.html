@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>5 V's of Big Data Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 2px solid #4CAF50;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .v-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .v-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+
+        .v-title {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .v-icon {
+            font-size: 2rem;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #4CAF50;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #45a049);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .data-stream {
+            height: 100px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            overflow-y: auto;
+            border: 1px solid #4CAF50;
+        }
+
+        .data-point {
+            margin: 2px 0;
+            opacity: 0.8;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 0.8; transform: translateX(0); }
+        }
+
+        .quality-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+
+        .quality-high { background-color: #4CAF50; }
+        .quality-medium { background-color: #FFC107; }
+        .quality-low { background-color: #F44336; }
+
+        .controls {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .control-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 0 10px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .control-btn:active {
+            transform: translateY(0);
+        }
+
+        .value-chart {
+            margin-top: 15px;
+        }
+
+        .chart-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .bar {
+            flex-grow: 1;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin: 0 10px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            border-radius: 10px;
+            transition: width 1s ease;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 5 V's of Big Data Simulation</h1>
+        <p>Real-time demonstration of Volume, Velocity, Variety, Veracity & Value</p>
+    </div>
+
+    <div class="controls">
+        <button class="control-btn" onclick="toggleSimulation()">Start Simulation</button>
+        <button class="control-btn" onclick="increaseLoad()">Increase Load</button>
+        <button class="control-btn" onclick="resetSimulation()">Reset</button>
+    </div>
+
+    <div class="dashboard">
+        <!-- VOLUME -->
+        <div class="v-card">
+            <div class="v-title">
+                <span class="v-icon">📊</span>
+                <span>VOLUME - Data Scale</span>
+            </div>
+            <div class="metric">
+                <span>Total Records:</span>
+                <span class="metric-value" id="totalRecords">0</span>
+            </div>
+            <div class="metric">
+                <span>Data Size:</span>
+                <span class="metric-value" id="dataSize">0 MB</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="volumeProgress"></div>
+            </div>
+            <div class="metric">
+                <span>Storage Capacity:</span>
+                <span class="metric-value" id="storageUsed">0%</span>
+            </div>
+        </div>
+
+        <!-- VELOCITY -->
+        <div class="v-card">
+            <div class="v-title">
+                <span class="v-icon">⚡</span>
+                <span>VELOCITY - Processing Speed</span>
+            </div>
+            <div class="metric">
+                <span>Records/Second:</span>
+                <span class="metric-value" id="recordsPerSecond">0</span>
+            </div>
+            <div class="metric">
+                <span>Processing Latency:</span>
+                <span class="metric-value" id="latency">0 ms</span>
+            </div>
+            <div class="data-stream" id="velocityStream">
+                <div class="data-point">Waiting for data stream...</div>
+            </div>
+        </div>
+
+        <!-- VARIETY -->
+        <div class="v-card">
+            <div class="v-title">
+                <span class="v-icon">🔄</span>
+                <span>VARIETY - Data Types</span>
+            </div>
+            <div class="metric">
+                <span>Structured Data:</span>
+                <span class="metric-value" id="structuredCount">0</span>
+            </div>
+            <div class="metric">
+                <span>Semi-Structured:</span>
+                <span class="metric-value" id="semiStructuredCount">0</span>
+            </div>
+            <div class="metric">
+                <span>Unstructured:</span>
+                <span class="metric-value" id="unstructuredCount">0</span>
+            </div>
+            <div class="data-stream" id="varietyStream">
+                <div class="data-point">Data type examples will appear here...</div>
+            </div>
+        </div>
+
+        <!-- VERACITY -->
+        <div class="v-card">
+            <div class="v-title">
+                <span class="v-icon">✅</span>
+                <span>VERACITY - Data Quality</span>
+            </div>
+            <div class="metric">
+                <span>Data Quality Score:</span>
+                <span class="metric-value" id="qualityScore">100%</span>
+                <span class="quality-indicator quality-high" id="qualityIndicator"></span>
+            </div>
+            <div class="metric">
+                <span>Valid Records:</span>
+                <span class="metric-value" id="validRecords">0</span>
+            </div>
+            <div class="metric">
+                <span>Error Rate:</span>
+                <span class="metric-value" id="errorRate">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="veracityProgress" style="width: 100%;"></div>
+            </div>
+        </div>
+
+        <!-- VALUE -->
+        <div class="v-card">
+            <div class="v-title">
+                <span class="v-icon">💰</span>
+                <span>VALUE - Business Impact</span>
+            </div>
+            <div class="metric">
+                <span>Insights Generated:</span>
+                <span class="metric-value" id="insightsCount">0</span>
+            </div>
+            <div class="metric">
+                <span>ROI Estimate:</span>
+                <span class="metric-value" id="roiEstimate">$0</span>
+            </div>
+            <div class="value-chart">
+                <div class="chart-bar">
+                    <span>Cost Savings</span>
+                    <div class="bar"><div class="bar-fill" id="costSavingsBar"></div></div>
+                    <span id="costSavings">$0</span>
+                </div>
+                <div class="chart-bar">
+                    <span>Revenue Impact</span>
+                    <div class="bar"><div class="bar-fill" id="revenueBar"></div></div>
+                    <span id="revenueImpact">$0</span>
+                </div>
+                <div class="chart-bar">
+                    <span>Efficiency Gain</span>
+                    <div class="bar"><div class="bar-fill" id="efficiencyBar"></div></div>
+                    <span id="efficiencyGain">0%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulation variables
+        let isRunning = false;
+        let simulationSpeed = 1000; // milliseconds
+        let totalRecords = 0;
+        let dataSize = 0;
+        let recordsPerSecond = 0;
+        let structuredCount = 0;
+        let semiStructuredCount = 0;
+        let unstructuredCount = 0;
+        let validRecords = 0;
+        let errorCount = 0;
+        let insightsCount = 0;
+        let costSavings = 0;
+        let revenueImpact = 0;
+        let efficiencyGain = 0;
+
+        // Data type examples
+        const dataTypes = {
+            structured: [
+                "SQL: SELECT * FROM customers WHERE age > 25",
+                "CSV: UserID,Name,Email,Age,Country",
+                "JSON: {\"transaction_id\":12345,\"amount\":99.99}",
+                "XML: <order><id>567</id><total>149.50</total></order>"
+            ],
+            semiStructured: [
+                "LOG: [2024-01-15 10:30:15] User login successful",
+                "API: GET /api/v1/users/profile HTTP/1.1 200 OK",
+                "NoSQL: db.users.find({\"status\":\"active\"})",
+                "Config: {\"database\":{\"host\":\"localhost\",\"port\":5432}}"
+            ],
+            unstructured: [
+                "TEXT: Customer feedback - 'Great service, very satisfied!'",
+                "IMAGE: Processing facial_recognition_data.jpg (2.3MB)",
+                "VIDEO: Analyzing security_camera_feed_001.mp4",
+                "AUDIO: Transcribing customer_support_call.wav"
+            ]
+        };
+
+        // Simulation functions
+        function toggleSimulation() {
+            isRunning = !isRunning;
+            const btn = document.querySelector('.control-btn');
+            btn.textContent = isRunning ? 'Stop Simulation' : 'Start Simulation';
+            
+            if (isRunning) {
+                runSimulation();
+            }
+        }
+
+        function increaseLoad() {
+            if (simulationSpeed > 200) {
+                simulationSpeed -= 200;
+                recordsPerSecond = Math.floor(1000 / simulationSpeed) * 10;
+                updateDisplay();
+            }
+        }
+
+        function resetSimulation() {
+            isRunning = false;
+            simulationSpeed = 1000;
+            totalRecords = 0;
+            dataSize = 0;
+            recordsPerSecond = 0;
+            structuredCount = 0;
+            semiStructuredCount = 0;
+            unstructuredCount = 0;
+            validRecords = 0;
+            errorCount = 0;
+            insightsCount = 0;
+            costSavings = 0;
+            revenueImpact = 0;
+            efficiencyGain = 0;
+            
+            document.querySelector('.control-btn').textContent = 'Start Simulation';
+            clearDataStreams();
+            updateDisplay();
+        }
+
+        function runSimulation() {
+            if (!isRunning) return;
+
+            // Generate random data
+            const newRecords = Math.floor(Math.random() * 50) + 10;
+            totalRecords += newRecords;
+            dataSize += newRecords * 0.001; // Assume 1KB per record
+            recordsPerSecond = Math.floor(1000 / simulationSpeed) * 10;
+
+            // Update variety counts
+            const structuredNew = Math.floor(newRecords * 0.4);
+            const semiStructuredNew = Math.floor(newRecords * 0.35);
+            const unstructuredNew = newRecords - structuredNew - semiStructuredNew;
+            
+            structuredCount += structuredNew;
+            semiStructuredCount += semiStructuredNew;
+            unstructuredCount += unstructuredNew;
+
+            // Update veracity (data quality)
+            const errorRate = Math.random() * 0.1; // 0-10% error rate
+            const newErrors = Math.floor(newRecords * errorRate);
+            errorCount += newErrors;
+            validRecords += (newRecords - newErrors);
+
+            // Update value metrics
+            if (totalRecords > 100) {
+                insightsCount += Math.floor(Math.random() * 3) + 1;
+                costSavings += Math.floor(Math.random() * 1000) + 500;
+                revenueImpact += Math.floor(Math.random() * 2000) + 1000;
+                efficiencyGain = Math.min(95, efficiencyGain + Math.random() * 2);
+            }
+
+            // Update displays
+            updateDisplay();
+            updateDataStreams();
+
+            // Continue simulation
+            setTimeout(runSimulation, simulationSpeed);
+        }
+
+        function updateDisplay() {
+            // Volume updates
+            document.getElementById('totalRecords').textContent = totalRecords.toLocaleString();
+            document.getElementById('dataSize').textContent = dataSize.toFixed(1) + ' MB';
+            const storageUsed = Math.min(100, (dataSize / 1000) * 100);
+            document.getElementById('storageUsed').textContent = storageUsed.toFixed(1) + '%';
+            document.getElementById('volumeProgress').style.width = storageUsed + '%';
+
+            // Velocity updates
+            document.getElementById('recordsPerSecond').textContent = recordsPerSecond;
+            const latency = Math.max(10, 1000 - (recordsPerSecond * 5));
+            document.getElementById('latency').textContent = latency.toFixed(0) + ' ms';
+
+            // Variety updates
+            document.getElementById('structuredCount').textContent = structuredCount.toLocaleString();
+            document.getElementById('semiStructuredCount').textContent = semiStructuredCount.toLocaleString();
+            document.getElementById('unstructuredCount').textContent = unstructuredCount.toLocaleString();
+
+            // Veracity updates
+            const qualityScore = totalRecords > 0 ? ((validRecords / totalRecords) * 100) : 100;
+            document.getElementById('qualityScore').textContent = qualityScore.toFixed(1) + '%';
+            document.getElementById('validRecords').textContent = validRecords.toLocaleString();
+            const errorRatePercent = totalRecords > 0 ? ((errorCount / totalRecords) * 100) : 0;
+            document.getElementById('errorRate').textContent = errorRatePercent.toFixed(1) + '%';
+            document.getElementById('veracityProgress').style.width = qualityScore + '%';
+            
+            // Update quality indicator
+            const indicator = document.getElementById('qualityIndicator');
+            if (qualityScore >= 90) {
+                indicator.className = 'quality-indicator quality-high';
+            } else if (qualityScore >= 70) {
+                indicator.className = 'quality-indicator quality-medium';
+            } else {
+                indicator.className = 'quality-indicator quality-low';
+            }
+
+            // Value updates
+            document.getElementById('insightsCount').textContent = insightsCount;
+            document.getElementById('roiEstimate').textContent = '$' + (revenueImpact - costSavings/2).toLocaleString();
+            document.getElementById('costSavings').textContent = '$' + costSavings.toLocaleString();
+            document.getElementById('revenueImpact').textContent = '$' + revenueImpact.toLocaleString();
+            document.getElementById('efficiencyGain').textContent = efficiencyGain.toFixed(1) + '%';
+            
+            // Update value chart bars
+            const maxValue = Math.max(costSavings, revenueImpact, efficiencyGain * 1000);
+            document.getElementById('costSavingsBar').style.width = (costSavings / maxValue * 100) + '%';
+            document.getElementById('revenueBar').style.width = (revenueImpact / maxValue * 100) + '%';
+            document.getElementById('efficiencyBar').style.width = (efficiencyGain / 100 * 100) + '%';
+        }
+
+        function updateDataStreams() {
+            // Update velocity stream
+            const velocityStream = document.getElementById('velocityStream');
+            const timestamp = new Date().toLocaleTimeString();
+            const dataPoint = document.createElement('div');
+            dataPoint.className = 'data-point';
+            dataPoint.textContent = `[${timestamp}] Processing ${Math.floor(Math.random() * 100) + 50} records...`;
+            
+            velocityStream.appendChild(dataPoint);
+            if (velocityStream.children.length > 6) {
+                velocityStream.removeChild(velocityStream.firstChild);
+            }
+            velocityStream.scrollTop = velocityStream.scrollHeight;
+
+            // Update variety stream
+            const varietyStream = document.getElementById('varietyStream');
+            const types = ['structured', 'semiStructured', 'unstructured'];
+            const randomType = types[Math.floor(Math.random() * types.length)];
+            const randomExample = dataTypes[randomType][Math.floor(Math.random() * dataTypes[randomType].length)];
+            
+            const varietyPoint = document.createElement('div');
+            varietyPoint.className = 'data-point';
+            varietyPoint.textContent = randomExample;
+            
+            varietyStream.appendChild(varietyPoint);
+            if (varietyStream.children.length > 5) {
+                varietyStream.removeChild(varietyStream.firstChild);
+            }
+            varietyStream.scrollTop = varietyStream.scrollTop;
+        }
+
+        function clearDataStreams() {
+            document.getElementById('velocityStream').innerHTML = '<div class="data-point">Waiting for data stream...</div>';
+            document.getElementById('varietyStream').innerHTML = '<div class="data-point">Data type examples will appear here...</div>';
+        }
+
+        // Initialize display
+        updateDisplay();
+    </script>
+</body>
+</html>
