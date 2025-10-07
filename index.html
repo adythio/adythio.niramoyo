@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colorful Sticky Notes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            background: white;
+            color: #2575fc;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        .notes-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            padding: 10px;
+        }
+
+        .note {
+            position: absolute;
+            min-width: 250px;
+            min-height: 250px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            cursor: move;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .note:hover {
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .note-header {
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: white;
+            cursor: move;
+        }
+
+        .note-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .note-controls button {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            box-shadow: none;
+        }
+
+        .note-controls button:hover {
+            transform: scale(1.1);
+        }
+
+        .note-content {
+            flex: 1;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            outline: none;
+            overflow-y: auto;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .resize-handle {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 20px;
+            height: 20px;
+            cursor: nw-resize;
+            background: linear-gradient(135deg, transparent 50%, rgba(0, 0, 0, 0.1) 50%);
+        }
+
+        .color-picker {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: center;
+        }
+
+        .color-option {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid white;
+            transition: transform 0.2s ease;
+        }
+
+        .color-option:hover {
+            transform: scale(1.2);
+        }
+
+        .color-option.active {
+            transform: scale(1.3);
+            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: white;
+            opacity: 0.8;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Colorful Sticky Notes</h1>
+        <p>Drag to move • Resize from corner • Changes auto-save</p>
+    </div>
+
+    <div class="controls">
+        <button id="addNote">Add New Note</button>
+        <button id="clearAll">Clear All Notes</button>
+        <button id="exportNotes">Export Notes</button>
+    </div>
+
+    <div class="notes-container" id="notesContainer"></div>
+
+    <footer>
+        <p>Your notes are automatically saved to your browser's local storage</p>
+    </footer>
+
+    <script>
+        // Note colors with bright contrast
+        const noteColors = [
+            { bg: '#FF6B6B', header: '#FF5252' }, // Red
+            { bg: '#4ECDC4', header: '#26A69A' }, // Teal
+            { bg: '#FFD166', header: '#FFC107' }, // Yellow
+            { bg: '#06D6A0', header: '#00C853' }, // Green
+            { bg: '#118AB2', header: '#0277BD' }, // Blue
+            { bg: '#9B5DE5', header: '#7E57C2' }, // Purple
+            { bg: '#F15BB5', header: '#EC407A' }  // Pink
+        ];
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            loadNotes();
+            document.getElementById('addNote').addEventListener('click', createNewNote);
+            document.getElementById('clearAll').addEventListener('click', clearAllNotes);
+            document.getElementById('exportNotes').addEventListener('click', exportNotes);
+        });
+
+        // Create a new note
+        function createNewNote() {
+            const noteId = 'note_' + Date.now();
+            const randomColor = noteColors[Math.floor(Math.random() * noteColors.length)];
+            
+            const note = {
+                id: noteId,
+                content: 'Type your note here...',
+                color: randomColor,
+                position: { x: 50, y: 50 },
+                size: { width: 300, height: 300 }
+            };
+            
+            saveNote(note);
+            renderNote(note);
+        }
+
+        // Render a note in the DOM
+        function renderNote(note) {
+            const notesContainer = document.getElementById('notesContainer');
+            
+            const noteElement = document.createElement('div');
+            noteElement.className = 'note';
+            noteElement.id = note.id;
+            noteElement.style.left = note.position.x + 'px';
+            noteElement.style.top = note.position.y + 'px';
+            noteElement.style.width = note.size.width + 'px';
+            noteElement.style.height = note.size.height + 'px';
+            noteElement.style.backgroundColor = note.color.bg;
+            
+            noteElement.innerHTML = `
+                <div class="note-header" style="background-color: ${note.color.header}">
+                    <span>Note</span>
+                    <div class="note-controls">
+                        <button class="color-btn" title="Change color">🎨</button>
+                        <button class="delete-btn" title="Delete note">×</button>
+                    </div>
+                </div>
+                <div class="note-content" contenteditable="true">${note.content}</div>
+                <div class="resize-handle"></div>
+            `;
+            
+            notesContainer.appendChild(noteElement);
+            
+            // Add event listeners
+            makeDraggable(noteElement);
+            makeResizable(noteElement);
+            
+            const contentEditable = noteElement.querySelector('.note-content');
+            const colorBtn = noteElement.querySelector('.color-btn');
+            const deleteBtn = noteElement.querySelector('.delete-btn');
+            
+            // Save content on input
+            contentEditable.addEventListener('input', function() {
+                saveNoteContent(note.id, this.innerHTML);
+            });
+            
+            // Change color
+            colorBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                showColorPicker(noteElement, note.id);
+            });
+            
+            // Delete note
+            deleteBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                deleteNote(note.id);
+            });
+        }
+
+        // Make note draggable
+        function makeDraggable(element) {
+            const header = element.querySelector('.note-header');
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            
+            header.onmousedown = dragMouseDown;
+            
+            function dragMouseDown(e) {
+                e.preventDefault();
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                document.onmousemove = elementDrag;
+            }
+            
+            function elementDrag(e) {
+                e.preventDefault();
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                
+                const newTop = element.offsetTop - pos2;
+                const newLeft = element.offsetLeft - pos1;
+                
+                // Keep note within viewport
+                const maxTop = window.innerHeight - element.offsetHeight;
+                const maxLeft = window.innerWidth - element.offsetWidth;
+                
+                element.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
+                element.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
+                
+                // Save position
+                saveNotePosition(element.id, {
+                    x: parseInt(element.style.left),
+                    y: parseInt(element.style.top)
+                });
+            }
+            
+            function closeDragElement() {
+                document.onmouseup = null;
+                document.onmousemove = null;
+            }
+        }
+
+        // Make note resizable
+        function makeResizable(element) {
+            const resizeHandle = element.querySelector('.resize-handle');
+            
+            resizeHandle.addEventListener('mousedown', initResize);
+            
+            function initResize(e) {
+                e.preventDefault();
+                
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startWidth = parseInt(document.defaultView.getComputedStyle(element).width, 10);
+                const startHeight = parseInt(document.defaultView.getComputedStyle(element).height, 10);
+                
+                function doResize(e) {
+                    const newWidth = startWidth + (e.clientX - startX);
+                    const newHeight = startHeight + (e.clientY - startY);
+                    
+                    // Minimum size constraints
+                    if (newWidth > 200 && newHeight > 150) {
+                        element.style.width = newWidth + 'px';
+                        element.style.height = newHeight + 'px';
+                    }
+                }
+                
+                function stopResize() {
+                    document.removeEventListener('mousemove', doResize);
+                    document.removeEventListener('mouseup', stopResize);
+                    
+                    // Save size
+                    saveNoteSize(element.id, {
+                        width: parseInt(element.style.width),
+                        height: parseInt(element.style.height)
+                    });
+                }
+                
+                document.addEventListener('mousemove', doResize);
+                document.addEventListener('mouseup', stopResize);
+            }
+        }
+
+        // Show color picker for a note
+        function showColorPicker(noteElement, noteId) {
+            // Remove existing color picker if any
+            const existingPicker = document.querySelector('.color-picker');
+            if (existingPicker) {
+                existingPicker.remove();
+            }
+            
+            const colorPicker = document.createElement('div');
+            colorPicker.className = 'color-picker';
+            
+            noteColors.forEach(color => {
+                const colorOption = document.createElement('div');
+                colorOption.className = 'color-option';
+                colorOption.style.backgroundColor = color.bg;
+                
+                colorOption.addEventListener('click', function() {
+                    noteElement.style.backgroundColor = color.bg;
+                    noteElement.querySelector('.note-header').style.backgroundColor = color.header;
+                    
+                    // Save color
+                    saveNoteColor(noteId, color);
+                    
+                    // Remove color picker
+                    colorPicker.remove();
+                });
+                
+                colorPicker.appendChild(colorOption);
+            });
+            
+            noteElement.querySelector('.note-header').appendChild(colorPicker);
+        }
+
+        // Save note to local storage
+        function saveNote(note) {
+            const notes = getNotes();
+            notes[note.id] = note;
+            localStorage.setItem('stickyNotes', JSON.stringify(notes));
+        }
+
+        // Save note content
+        function saveNoteContent(noteId, content) {
+            const notes = getNotes();
+            if (notes[noteId]) {
+                notes[noteId].content = content;
+                localStorage.setItem('stickyNotes', JSON.stringify(notes));
+            }
+        }
+
+        // Save note position
+        function saveNotePosition(noteId, position) {
+            const notes = getNotes();
+            if (notes[noteId]) {
+                notes[noteId].position = position;
+                localStorage.setItem('stickyNotes', JSON.stringify(notes));
+            }
+        }
+
+        // Save note size
+        function saveNoteSize(noteId, size) {
+            const notes = getNotes();
+            if (notes[noteId]) {
+                notes[noteId].size = size;
+                localStorage.setItem('stickyNotes', JSON.stringify(notes));
+            }
+        }
+
+        // Save note color
+        function saveNoteColor(noteId, color) {
+            const notes = getNotes();
+            if (notes[noteId]) {
+                notes[noteId].color = color;
+                localStorage.setItem('stickyNotes', JSON.stringify(notes));
+            }
+        }
+
+        // Delete note
+        function deleteNote(noteId) {
+            const notes = getNotes();
+            delete notes[noteId];
+            localStorage.setItem('stickyNotes', JSON.stringify(notes));
+            
+            const noteElement = document.getElementById(noteId);
+            if (noteElement) {
+                noteElement.remove();
+            }
+        }
+
+        // Get all notes from local storage
+        function getNotes() {
+            const notesJson = localStorage.getItem('stickyNotes');
+            return notesJson ? JSON.parse(notesJson) : {};
+        }
+
+        // Load notes from local storage
+        function loadNotes() {
+            const notes = getNotes();
+            Object.values(notes).forEach(note => renderNote(note));
+        }
+
+        // Clear all notes
+        function clearAllNotes() {
+            if (confirm('Are you sure you want to delete all notes?')) {
+                localStorage.removeItem('stickyNotes');
+                document.getElementById('notesContainer').innerHTML = '';
+            }
+        }
+
+        // Export notes as JSON
+        function exportNotes() {
+            const notes = getNotes();
+            const dataStr = JSON.stringify(notes, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'sticky-notes.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+    </script>
+</body>
+</html>
